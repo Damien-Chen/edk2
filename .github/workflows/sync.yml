@@ -25,7 +25,7 @@ jobs:
       run: git fetch upstream
 
     - name: Merge upstream into fork's default branch
-      run: git merge upstream/main --allow-unrelated-histories
+      run: git merge upstream/master --allow-unrelated-histories
 
     - name: Push changes to forked repo
       run: git push origin master
