@@ -147,6 +147,29 @@ AddMemoryLength (
   NewEntry->NumberOfPages += NumberOfPages;
 }
 
+/**
+  Get the formatted size string.
+
+  @param[in]  Size        The size in bytes.
+  @param[out] String      The buffer to hold the formatted string.
+**/
+VOID
+GetFormattedSizeString (
+  IN  UINT64  Size,
+  OUT CHAR16  *String
+  )
+{
+  if (Size >= SIZE_1GB) {
+    UnicodeSPrint (String, 20, L"%ld GB", DivU64x32 (Size, SIZE_1GB));
+  } else if (Size >= SIZE_1MB) {
+    UnicodeSPrint (String, 20, L"%ld MB", DivU64x32 (Size, SIZE_1MB));
+  } else if (Size >= SIZE_1KB) {
+    UnicodeSPrint (String, 20, L"%ld KB", DivU64x32 (Size, SIZE_1KB));
+  } else {
+    UnicodeSPrint (String, 20, L"%ld B", Size);
+  }
+}
+
 /** Parse Memory Descriptors
 
 @param[in]  Descriptors   Array of pointers to Memory Descriptors.
@@ -172,6 +195,8 @@ ParseMemoryDescriptors (
   LIST_ENTRY              MemoryList;
   LIST_ENTRY              *Link;
   MEMORY_LENGTH_ENTRY     *Entry;
+  CHAR16                  SizeStrings[EfiMaxMemoryType][20];
+  CHAR16                  OtherSizeString[20];
 
   InitializeListHead (&MemoryList);
 
@@ -232,6 +257,7 @@ ParseMemoryDescriptors (
   TotalPagesSize = MultU64x64 (SIZE_4KB, TotalPages);
   for (Index = EfiReservedMemoryType; Index < EfiMaxMemoryType; Index++) {
     MemoryPageCount[Index].PagesSize = MultU64x64 (SIZE_4KB, MemoryPageCount[Index].Pages);
+    GetFormattedSizeString (MemoryPageCount[Index].PagesSize, SizeStrings[Index]);
   }
 
   //
@@ -243,34 +269,49 @@ ParseMemoryDescriptors (
       gShellDebug1HiiHandle,
       MemoryPageCount[EfiReservedMemoryType].Pages,
       MemoryPageCount[EfiReservedMemoryType].PagesSize,
+      SizeStrings[EfiReservedMemoryType],
       MemoryPageCount[EfiLoaderCode].Pages,
       MemoryPageCount[EfiLoaderCode].PagesSize,
+      SizeStrings[EfiLoaderCode],
       MemoryPageCount[EfiLoaderData].Pages,
       MemoryPageCount[EfiLoaderData].PagesSize,
+      SizeStrings[EfiLoaderData],
       MemoryPageCount[EfiBootServicesCode].Pages,
       MemoryPageCount[EfiBootServicesCode].PagesSize,
+      SizeStrings[EfiBootServicesCode],
       MemoryPageCount[EfiBootServicesData].Pages,
       MemoryPageCount[EfiBootServicesData].PagesSize,
+      SizeStrings[EfiBootServicesData],
       MemoryPageCount[EfiRuntimeServicesCode].Pages,
       MemoryPageCount[EfiRuntimeServicesCode].PagesSize,
+      SizeStrings[EfiRuntimeServicesCode],
       MemoryPageCount[EfiRuntimeServicesData].Pages,
       MemoryPageCount[EfiRuntimeServicesData].PagesSize,
+      SizeStrings[EfiRuntimeServicesData],
       MemoryPageCount[EfiACPIReclaimMemory].Pages,
       MemoryPageCount[EfiACPIReclaimMemory].PagesSize,
+      SizeStrings[EfiACPIReclaimMemory],
       MemoryPageCount[EfiACPIMemoryNVS].Pages,
       MemoryPageCount[EfiACPIMemoryNVS].PagesSize,
+      SizeStrings[EfiACPIMemoryNVS],
       MemoryPageCount[EfiMemoryMappedIO].Pages,
       MemoryPageCount[EfiMemoryMappedIO].PagesSize,
+      SizeStrings[EfiMemoryMappedIO],
       MemoryPageCount[EfiMemoryMappedIOPortSpace].Pages,
       MemoryPageCount[EfiMemoryMappedIOPortSpace].PagesSize,
+      SizeStrings[EfiMemoryMappedIOPortSpace],
       MemoryPageCount[EfiPalCode].Pages,
       MemoryPageCount[EfiPalCode].PagesSize,
+      SizeStrings[EfiPalCode],
       MemoryPageCount[EfiUnacceptedMemoryType].Pages,
       MemoryPageCount[EfiUnacceptedMemoryType].PagesSize,
+      SizeStrings[EfiUnacceptedMemoryType],
       MemoryPageCount[EfiConventionalMemory].Pages,
       MemoryPageCount[EfiConventionalMemory].PagesSize,
+      SizeStrings[EfiConventionalMemory],
       MemoryPageCount[EfiPersistentMemory].Pages,
-      MemoryPageCount[EfiPersistentMemory].PagesSize
+      MemoryPageCount[EfiPersistentMemory].PagesSize,
+      SizeStrings[EfiPersistentMemory]
       );
 
     //
@@ -278,12 +319,14 @@ ParseMemoryDescriptors (
     //
     for (Link = GetFirstNode (&MemoryList); !IsNull (&MemoryList, Link); Link = GetNextNode (&MemoryList, Link)) {
       Entry = BASE_CR (Link, MEMORY_LENGTH_ENTRY, Link);
+      GetFormattedSizeString (MultU64x64 (SIZE_4KB, Entry->NumberOfPages), OtherSizeString);
       ShellPrintHiiDefaultEx (
         STRING_TOKEN (STR_MEMMAP_LIST_SUMM_OTHER),
         gShellDebug1HiiHandle,
         Entry->Type,
         Entry->NumberOfPages,
-        MultU64x64 (SIZE_4KB, Entry->NumberOfPages)
+        MultU64x64 (SIZE_4KB, Entry->NumberOfPages),
+        OtherSizeString
         );
     }
 
