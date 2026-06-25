@@ -399,15 +399,35 @@ DxeMain (
 
   DEBUG_CODE_BEGIN ();
   EFI_PEI_HOB_POINTERS  Hob;
+  STATIC CONST CHAR8    *MemoryTypeNames[] = {
+    "EfiReservedMemoryType",
+    "EfiLoaderCode",
+    "EfiLoaderData",
+    "EfiBootServicesCode",
+    "EfiBootServicesData",
+    "EfiRuntimeServicesCode",
+    "EfiRuntimeServicesData",
+    "EfiConventionalMemory",
+    "EfiUnusableMemory",
+    "EfiACPIReclaimMemory",
+    "EfiACPIMemoryNVS",
+    "EfiMemoryMappedIO",
+    "EfiMemoryMappedIOPortSpace",
+    "EfiPalCode",
+    "EfiPersistentMemory",
+    "EfiUnacceptedMemoryType"
+  };
 
   for (Hob.Raw = HobStart; !END_OF_HOB_LIST (Hob); Hob.Raw = GET_NEXT_HOB (Hob)) {
     if (GET_HOB_TYPE (Hob) == EFI_HOB_TYPE_MEMORY_ALLOCATION) {
       DEBUG ((
         DEBUG_INFO | DEBUG_LOAD,
-        "Memory Allocation 0x%08x 0x%0lx - 0x%0lx\n", \
-        Hob.MemoryAllocation->AllocDescriptor.MemoryType,                      \
-        Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress,               \
-        Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress + Hob.MemoryAllocation->AllocDescriptor.MemoryLength - 1
+        "Memory Allocation 0x%08x 0x%0lx - 0x%0lx (%a)\n",
+        Hob.MemoryAllocation->AllocDescriptor.MemoryType,
+        Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress,
+        Hob.MemoryAllocation->AllocDescriptor.MemoryBaseAddress + Hob.MemoryAllocation->AllocDescriptor.MemoryLength - 1,
+        (Hob.MemoryAllocation->AllocDescriptor.MemoryType < ARRAY_SIZE (MemoryTypeNames))
+          ? MemoryTypeNames[Hob.MemoryAllocation->AllocDescriptor.MemoryType] : "Unknown"
         ));
     }
   }
